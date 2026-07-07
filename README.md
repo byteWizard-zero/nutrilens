@@ -42,7 +42,7 @@
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/1bitVscoder/nutrilens.git
+   git clone https://github.com/byteWizard-zero/nutrilens.git
    cd nutrilens
    ```
 
