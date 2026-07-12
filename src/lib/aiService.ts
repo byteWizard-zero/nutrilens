@@ -189,7 +189,7 @@ let aiServiceInstance: AIService | null = null;
 
 export function getAIService(): AIService {
   if (!aiServiceInstance) {
-    const useReal = process.env.NEXT_PUBLIC_USE_REAL_AI === 'true';
+    const useReal = process.env.NEXT_PUBLIC_USE_REAL_AI !== 'false';
     aiServiceInstance = useReal ? new RealAIService() : new MockAIService();
   }
   return aiServiceInstance;
