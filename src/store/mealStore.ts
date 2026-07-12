@@ -17,6 +17,7 @@ import {
   generateId,
 } from '@/lib/nutrition';
 import { generateMealHistory } from '@/lib/mockData';
+import { getLocalDateString } from '@/lib/dateUtils';
 
 interface MealState {
   // Meals indexed by date (YYYY-MM-DD)
@@ -118,7 +119,7 @@ export const useMealStore = create<MealState>()(
         for (let i = 6; i >= 0; i--) {
           const date = new Date(today);
           date.setDate(date.getDate() - i);
-          const dateStr = date.toISOString().split('T')[0];
+          const dateStr = getLocalDateString(date);
           weekData.push(get().getDailyTotals(dateStr));
         }
 

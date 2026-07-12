@@ -6,6 +6,7 @@
  */
 
 import { FoodItem, MealEntry, MealType, NutritionData, generateId } from './nutrition';
+import { getLocalDateString } from './dateUtils';
 
 // ──────────────────────────────────────────────
 // Food Item Templates
@@ -280,7 +281,7 @@ export function generateMealHistory(): Record<string, MealEntry[]> {
   for (let i = 0; i < 7; i++) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = getLocalDateString(date);
 
     const plan = dailyMealPlans[i % dailyMealPlans.length];
     history[dateStr] = plan.map(m => createMeal(m.type, m.foods, dateStr, m.time));
@@ -363,12 +364,7 @@ export function getRandomAnalysis(): MockAnalysisResult {
 // Mock AI Chat Responses
 // ──────────────────────────────────────────────
 
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: string;
-}
+
 
 const CHAT_RESPONSES: Record<string, string[]> = {
   default: [
@@ -438,46 +434,4 @@ export function getMockChatResponse(
     .replace('{goal}', context.goal);
 }
 
-// ──────────────────────────────────────────────
-// Weekly Trend Data
-// ──────────────────────────────────────────────
 
-export interface DayTrendData {
-  date: string;
-  dayLabel: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  target: number;
-}
-
-/**
- * Generate 7-day trend data for charts
- */
-export function generateWeeklyTrends(calorieTarget: number): DayTrendData[] {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const today = new Date();
-  const trends: DayTrendData[] = [];
-
-  const calorieVariations = [0.85, 1.05, 0.92, 1.12, 0.95, 0.88, 1.02];
-
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    const multiplier = calorieVariations[(6 - i) % calorieVariations.length];
-    const dayCalories = Math.round(calorieTarget * multiplier);
-
-    trends.push({
-      date: date.toISOString().split('T')[0],
-      dayLabel: days[date.getDay()],
-      calories: dayCalories,
-      protein: Math.round(dayCalories * 0.28 / 4),
-      carbs: Math.round(dayCalories * 0.45 / 4),
-      fat: Math.round(dayCalories * 0.27 / 9),
-      target: calorieTarget,
-    });
-  }
-
-  return trends;
-}

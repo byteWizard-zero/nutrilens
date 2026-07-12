@@ -5,6 +5,8 @@
  * macro ratio calculations, and daily aggregation.
  */
 
+import { getLocalDateString } from './dateUtils';
+
 export type Goal = 'lose' | 'maintain' | 'gain';
 export type Sex = 'male' | 'female';
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
@@ -201,7 +203,7 @@ export function calculateDailyTotals(meals: MealEntry[]): DailyTotals {
   );
 
   return {
-    date: meals[0]?.date ?? new Date().toISOString().split('T')[0],
+    date: meals[0]?.date ?? getLocalDateString(),
     ...totals,
     mealCount: meals.length,
   };
@@ -217,7 +219,7 @@ export function calculateStreak(mealsByDate: Record<string, MealEntry[]>): numbe
   for (let i = 0; i < 365; i++) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = getLocalDateString(date);
     
     if (mealsByDate[dateStr] && mealsByDate[dateStr].length > 0) {
       streak++;
@@ -315,3 +317,20 @@ export const MEAL_TYPE_INFO: Record<MealType, { label: string; emoji: string; ti
   dinner: { label: 'Dinner', emoji: '🌙', timeRange: '7:00 - 9:00 PM' },
   snack: { label: 'Snack', emoji: '🍿', timeRange: 'Anytime' },
 };
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
+
+export interface DayTrendData {
+  date: string;
+  dayLabel: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  target: number;
+}

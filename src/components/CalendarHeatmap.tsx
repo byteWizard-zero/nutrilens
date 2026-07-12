@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
+import { getLocalDateString } from '@/lib/dateUtils';
 
 interface CalendarHeatmapProps {
   data: Record<string, { calories: number; target: number }>;
@@ -31,7 +32,7 @@ function getDaysInMonth(date: Date): Date[] {
 }
 
 function getDateStr(date: Date): string {
-  return date.toISOString().split('T')[0];
+  return getLocalDateString(date);
 }
 
 function getCellColor(calories: number, target: number): string {
