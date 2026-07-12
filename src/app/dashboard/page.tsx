@@ -8,11 +8,12 @@ import CalorieRing from '@/components/CalorieRing';
 import MacroChart from '@/components/MacroChart';
 import MealCard from '@/components/MealCard';
 import Card from '@/components/ui/Card';
+import { getLocalDateString } from '@/lib/dateUtils';
 
 export default function DashboardPage() {
   const profile = useUserStore((s) => s.profile);
   const targets = useUserStore((s) => s.targets);
-  const getMealsForDate = useMealStore((s) => s.getMealsForDate);
+  const meals = useMealStore((s) => s.meals);
   const getDailyTotals = useMealStore((s) => s.getDailyTotals);
   const getStreak = useMealStore((s) => s.getStreak);
   const [mounted, setMounted] = useState(false);
@@ -21,8 +22,8 @@ export default function DashboardPage() {
     setMounted(true);
   }, []);
 
-  const today = new Date().toISOString().split('T')[0];
-  const todayMeals = getMealsForDate(today);
+  const today = getLocalDateString();
+  const todayMeals = meals[today] ?? [];
   const totals = getDailyTotals(today);
   const streak = getStreak();
 

@@ -8,6 +8,7 @@ import Chip from '@/components/ui/Chip';
 import { useChatStore } from '@/store/chatStore';
 import { useUserStore } from '@/store/userStore';
 import { useMealStore } from '@/store/mealStore';
+import { getLocalDateString } from '@/lib/dateUtils';
 
 const QUICK_ACTIONS = [
   'Was my lunch healthy?',
@@ -24,15 +25,15 @@ export default function ChatPage() {
   const addSystemMessage = useChatStore((s) => s.addSystemMessage);
   const targets = useUserStore((s) => s.targets);
   const profile = useUserStore((s) => s.profile);
+  const meals = useMealStore((s) => s.meals);
   const getDailyTotals = useMealStore((s) => s.getDailyTotals);
-  const getMealsForDate = useMealStore((s) => s.getMealsForDate);
 
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
   const totals = getDailyTotals(today);
-  const todayMeals = getMealsForDate(today);
+  const todayMeals = meals[today] ?? [];
   const remaining = Math.max(0, targets.calories - totals.calories);
 
   // Initial greeting

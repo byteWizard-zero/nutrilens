@@ -7,7 +7,7 @@ import CalendarHeatmap from '@/components/CalendarHeatmap';
 import TrendChart from '@/components/TrendChart';
 import { useUserStore } from '@/store/userStore';
 import { useMealStore } from '@/store/mealStore';
-import { DayTrendData } from '@/lib/mockData';
+import { DayTrendData } from '@/lib/nutrition';
 
 export default function InsightsPage() {
   const targets = useUserStore((s) => s.targets);
@@ -56,7 +56,7 @@ export default function InsightsPage() {
 
   // Average calories this week
   const avgCalories = weeklyTotals.length > 0
-    ? Math.round(weeklyTotals.reduce((sum, d) => sum + d.calories, 0) / weeklyTotals.filter((d) => d.calories > 0).length || 1)
+    ? Math.round(weeklyTotals.reduce((sum, d) => sum + d.calories, 0) / (weeklyTotals.filter((d) => d.calories > 0).length || 1))
     : 0;
 
   // Best day
