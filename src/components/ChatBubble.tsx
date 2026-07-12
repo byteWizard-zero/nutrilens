@@ -20,21 +20,40 @@ export default function ChatBubble({ message, isStreaming = false }: ChatBubbleP
     hour12: true,
   });
 
+  const renderLine = (line: string) => {
+    const parts = line.split('**');
+    return parts.map((part, index) => {
+      if (index % 2 === 1) {
+        return <strong key={index}>{part}</strong>;
+      }
+      return part;
+    });
+  };
+
   // Simple markdown-like formatting
   const formatContent = (text: string) => {
     return text.split('\n').map((line, i) => {
-      // Bold
-      let formatted = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      // Bullet points
-      if (formatted.startsWith('• ') || formatted.startsWith('- ')) {
-        formatted = `<span style="display:block;padding-left:12px">• ${formatted.slice(2)}</span>`;
+      let isBullet = false;
+      let cleanLine = line;
+      if (line.startsWith('• ') || line.startsWith('- ')) {
+        isBullet = true;
+        cleanLine = line.slice(2);
       }
+
+      const content = renderLine(cleanLine);
+
+      if (isBullet) {
+        return (
+          <span key={i} style={{ display: 'block', paddingLeft: '12px' }}>
+            • {content}
+          </span>
+        );
+      }
+
       return (
-        <span
-          key={i}
-          dangerouslySetInnerHTML={{ __html: formatted || '<br/>' }}
-          style={{ display: 'block' }}
-        />
+        <span key={i} style={{ display: 'block' }}>
+          {content.length > 0 && content[0] !== '' ? content : <br />}
+        </span>
       );
     });
   };
