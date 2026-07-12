@@ -7,9 +7,8 @@
 'use client';
 
 import { create } from 'zustand';
-import { ChatMessage } from '@/lib/mockData';
 import { getAIService, ChatContext } from '@/lib/aiService';
-import { generateId } from '@/lib/nutrition';
+import { generateId, ChatMessage } from '@/lib/nutrition';
 
 interface ChatState {
   messages: ChatMessage[];

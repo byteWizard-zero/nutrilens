@@ -77,14 +77,6 @@ function roleToCssVar(role: string): string {
   return `--md-sys-color-${kebab}`;
 }
 
-/**
- * Generate an MD3 theme from a seed color hex string
- */
-export function generateTheme(seedColorHex: string) {
-  const sourceColor = argbFromHex(seedColorHex);
-  const theme = themeFromSourceColor(sourceColor);
-  return theme;
-}
 
 /**
  * Apply the MD3 theme to the document root as CSS custom properties
