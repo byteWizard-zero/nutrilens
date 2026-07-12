@@ -1,7 +1,4 @@
 import { NextRequest } from 'next/server';
-import { GoogleGenAI } from '@google/genai';
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 const SYSTEM_PROMPT = `You are NutriLens AI, a friendly and knowledgeable nutritionist assistant. 
 You have access to the user's daily nutrition data provided in each message.
@@ -10,6 +7,16 @@ Focus on practical suggestions, not medical advice.`;
 
 export async function POST(req: NextRequest) {
   try {
+    const apiKey = process.env.OPENAI_API_KEY;
+    const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
+
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({ error: 'OPENAI_API_KEY is not configured in environment variables' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { message, context } = await req.json();
 
     const contextPrompt = `User's today stats: ${context.calories}/${context.calorieTarget} kcal, 
@@ -17,26 +24,93 @@ Protein: ${context.protein}/${context.proteinTarget}g,
 Carbs: ${context.carbs}g, Fat: ${context.fat}g, 
 Meals logged: ${context.mealCount}, Goal: ${context.goal}`;
 
-    // Call generateContentStream on the new SDK
-    const responseStream = await ai.models.generateContentStream({
-      model: 'gemini-2.5-flash',
-      contents: [
-        { role: 'user', parts: [{ text: contextPrompt + '\n\nUser: ' + message }] },
-      ],
-      config: {
-        systemInstruction: SYSTEM_PROMPT,
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
       },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', // standard chat completions model default
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: contextPrompt + '\n\nUser: ' + message },
+        ],
+        stream: true,
+      }),
     });
 
-    // Stream as Server-Sent Events
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI Chat stream error response:', errorText);
+      return new Response(
+        JSON.stringify({ error: `OpenAI API error: ${response.status} ${errorText}` }),
+        { status: response.status, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!response.body) {
+      return new Response(
+        JSON.stringify({ error: 'No response body received from OpenAI' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
     const encoder = new TextEncoder();
+
     const stream = new ReadableStream({
       async start(controller) {
+        let buffer = '';
         try {
-          for await (const chunk of responseStream) {
-            const text = chunk.text ?? '';
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token: text })}\n\n`));
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed) continue;
+              if (trimmed === 'data: [DONE]') {
+                controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+                continue;
+              }
+              if (!trimmed.startsWith('data: ')) continue;
+
+              const dataStr = trimmed.slice(6);
+              try {
+                const parsed = JSON.parse(dataStr);
+                const token = parsed.choices?.[0]?.delta?.content ?? '';
+                if (token) {
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token })}\n\n`));
+                }
+              } catch (e) {
+                console.warn('Failed to parse SSE line:', trimmed, e);
+              }
+            }
           }
+
+          // Handle any remaining buffer
+          if (buffer) {
+            const trimmed = buffer.trim();
+            if (trimmed && trimmed.startsWith('data: ') && trimmed !== 'data: [DONE]') {
+              const dataStr = trimmed.slice(6);
+              try {
+                const parsed = JSON.parse(dataStr);
+                const token = parsed.choices?.[0]?.delta?.content ?? '';
+                if (token) {
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ token })}\n\n`));
+                }
+              } catch (e) {
+                console.warn('Failed to parse SSE line in final buffer:', trimmed, e);
+              }
+            }
+          }
+
           controller.enqueue(encoder.encode('data: [DONE]\n\n'));
         } catch (err) {
           console.error('Error during streaming:', err);

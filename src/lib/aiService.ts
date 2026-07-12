@@ -57,7 +57,8 @@ export class RealAIService implements AIService {
 
     if (!res.ok) throw new Error('Chat request failed');
 
-    const reader = res.body!.getReader();
+    if (!res.body) throw new Error('No response body');
+    const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let fullResponse = '';
     let buffer = '';
@@ -186,19 +187,10 @@ export class MockAIService implements AIService {
 // Singleton instance
 let aiServiceInstance: AIService | null = null;
 
-/**
- * Get the AI service instance (mock for now, can be swapped)
- */
 export function getAIService(): AIService {
   if (!aiServiceInstance) {
-    aiServiceInstance = new RealAIService();
+    const useReal = process.env.NEXT_PUBLIC_USE_REAL_AI === 'true';
+    aiServiceInstance = useReal ? new RealAIService() : new MockAIService();
   }
   return aiServiceInstance;
-}
-
-/**
- * Set a custom AI service (for future real API integration)
- */
-export function setAIService(service: AIService): void {
-  aiServiceInstance = service;
 }
