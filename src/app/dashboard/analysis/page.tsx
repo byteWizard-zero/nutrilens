@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/ui/Button';
@@ -10,12 +10,15 @@ import ConfettiAnimation from '@/components/ConfettiAnimation';
 import { useMealStore } from '@/store/mealStore';
 import { getAIService } from '@/lib/aiService';
 import { FoodItem, aggregateNutrition, MealType } from '@/lib/nutrition';
+import { usePhotoStore } from '@/store/photoStore';
+import { getLocalDateString } from '@/lib/dateUtils';
 
 export default function AnalysisPage() {
   const router = useRouter();
   const addMeal = useMealStore((s) => s.addMeal);
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<FoodItem[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [confidence, setConfidence] = useState(0);
@@ -29,24 +32,32 @@ export default function AnalysisPage() {
     return 'dinner';
   });
 
-  // Run analysis on mount
-  useEffect(() => {
-    const analyze = async () => {
-      try {
-        const photo = sessionStorage.getItem('nutrilens-photo') || '';
-        const aiService = getAIService();
-        const result = await aiService.analyzeMealPhoto(photo);
-        setItems(result.items);
-        setSuggestions(result.suggestions);
-        setConfidence(result.overallConfidence);
-      } catch (err) {
-        console.error('Error during meal analysis:', err);
-      } finally {
-        setLoading(false);
+  // Run analysis
+  const analyze = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const photo = usePhotoStore.getState().photo || '';
+      if (!photo) {
+        throw new Error('No meal photo was found. Please go back and take a photo of your meal.');
       }
-    };
-    analyze();
+      const aiService = getAIService();
+      const result = await aiService.analyzeMealPhoto(photo);
+      setItems(result.items || []);
+      setSuggestions(result.suggestions || []);
+      setConfidence(result.overallConfidence || 0);
+    } catch (err) {
+      console.error('Error during meal analysis:', err);
+      const errMsg = err instanceof Error ? err.message : 'Failed to analyze your meal. Please check your connection and try again.';
+      setError(errMsg);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    analyze();
+  }, [analyze]);
 
   const updatePortion = (itemId: string, multiplier: number) => {
     setItems((prev) =>
@@ -59,7 +70,8 @@ export default function AnalysisPage() {
   const totals = aggregateNutrition(items);
 
   const handleLogMeal = () => {
-    const today = new Date().toISOString().split('T')[0];
+    if (items.length === 0) return;
+    const today = getLocalDateString();
     addMeal({
       mealType: selectedMealType,
       items,
@@ -73,6 +85,39 @@ export default function AnalysisPage() {
       router.push('/dashboard');
     }, 2000);
   };
+
+  // Error state
+  if (error) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 'calc(100vh - 96px)',
+          padding: '24px',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ fontSize: '64px', marginBottom: '24px' }}>⚠️</div>
+        <h2 className="title-large" style={{ color: 'var(--md-sys-color-error)', marginBottom: '8px' }}>
+          Analysis Failed
+        </h2>
+        <p className="body-medium" style={{ color: 'var(--md-sys-color-on-surface-variant)', marginBottom: '24px', maxWidth: '320px' }}>
+          {error}
+        </p>
+        <div style={{ display: 'flex', gap: '12px', width: '100%', maxWidth: '300px' }}>
+          <Button variant="outlined" onClick={() => router.push('/dashboard/camera')} fullWidth>
+            Go Back
+          </Button>
+          <Button variant="filled" onClick={analyze} fullWidth>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Loading state
   if (loading) {
@@ -274,7 +319,7 @@ export default function AnalysisPage() {
         <AnimatePresence mode="wait">
           {!logged ? (
             <motion.div key="log" exit={{ opacity: 0, scale: 0.9 }}>
-              <Button variant="filled" onClick={handleLogMeal} fullWidth>
+              <Button variant="filled" onClick={handleLogMeal} fullWidth disabled={items.length === 0}>
                 ✅ Log Meal
               </Button>
             </motion.div>

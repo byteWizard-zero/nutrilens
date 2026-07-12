@@ -3,10 +3,12 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useRouter } from 'next/navigation';
+import { usePhotoStore } from '@/store/photoStore';
 import Button from '@/components/ui/Button';
 
 export default function CameraPage() {
   const router = useRouter();
+  const setPhotoStore = usePhotoStore((s) => s.setPhoto);
   const [photo, setPhoto] = useState<string | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState(false);
@@ -59,9 +61,8 @@ export default function CameraPage() {
   };
 
   const handleAnalyze = () => {
-    // Store photo in sessionStorage for the analysis page
     if (photo) {
-      sessionStorage.setItem('nutrilens-photo', photo);
+      setPhotoStore(photo);
     }
     router.push('/dashboard/analysis');
   };
