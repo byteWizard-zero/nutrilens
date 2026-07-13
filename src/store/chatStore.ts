@@ -70,7 +70,17 @@ export const useChatStore = create<ChatState>((set) => ({
       }));
     } catch (error) {
       console.error('Chat error:', error);
-      set({ isTyping: false, currentStreamedText: '' });
+      const errorMsg: ChatMessage = {
+        id: generateId(),
+        role: 'assistant',
+        content: '⚠️ **Could not connect to NutriLens AI.** Please check if your `OPENAI_API_KEY` is configured in your environment variables, or try again later.',
+        timestamp: new Date().toISOString(),
+      };
+      set((state) => ({
+        messages: [...state.messages, errorMsg],
+        isTyping: false,
+        currentStreamedText: '',
+      }));
     }
   },
 

@@ -34,6 +34,9 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Only intercept GET requests
+  if (event.request.method !== 'GET') return;
+
   // Only intercept requests for the same origin
   if (event.request.url.startsWith(self.location.origin)) {
     event.respondWith(
