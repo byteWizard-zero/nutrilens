@@ -2,13 +2,10 @@
 
 import React from 'react';
 import { motion } from 'motion/react';
+import { ChatMessage } from '@/lib/nutrition';
 
 interface ChatBubbleProps {
-  message: {
-    role: 'user' | 'assistant';
-    content: string;
-    timestamp: string;
-  };
+  message: ChatMessage;
   isStreaming?: boolean;
 }
 
@@ -109,6 +106,29 @@ export default function ChatBubble({ message, isStreaming = false }: ChatBubbleP
           }}
         >
           {formatContent(message.content)}
+          {message.actionInfo && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              style={{
+                marginTop: '10px',
+                padding: '10px 12px',
+                borderRadius: 'var(--md-sys-shape-corner-medium)',
+                backgroundColor: 'var(--md-sys-color-tertiary-container)',
+                color: 'var(--md-sys-color-on-tertiary-container)',
+                fontSize: '13px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <span style={{ fontSize: '16px' }}>⚡</span>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '13px' }}>{message.actionInfo.title}</div>
+                <div style={{ fontSize: '12px', opacity: 0.9 }}>{message.actionInfo.detail}</div>
+              </div>
+            </motion.div>
+          )}
           {isStreaming && (
             <motion.span
               animate={{ opacity: [1, 0] }}

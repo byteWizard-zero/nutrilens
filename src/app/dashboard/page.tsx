@@ -10,6 +10,9 @@ import MealCard from '@/components/MealCard';
 import Card from '@/components/ui/Card';
 import { getLocalDateString } from '@/lib/dateUtils';
 
+import QuickLogModal from '@/components/QuickLogModal';
+import Button from '@/components/ui/Button';
+
 export default function DashboardPage() {
   const profile = useUserStore((s) => s.profile);
   const targets = useUserStore((s) => s.targets);
@@ -17,6 +20,7 @@ export default function DashboardPage() {
   const getDailyTotals = useMealStore((s) => s.getDailyTotals);
   const getStreak = useMealStore((s) => s.getStreak);
   const [mounted, setMounted] = useState(false);
+  const [isQuickLogOpen, setIsQuickLogOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -132,9 +136,13 @@ export default function DashboardPage() {
           <h2 className="title-medium" style={{ color: 'var(--md-sys-color-on-surface)', margin: 0 }}>
             Today&apos;s Meals
           </h2>
-          <span className="label-medium" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
-            {todayMeals.length} logged
-          </span>
+          <Button
+            variant="tonal"
+            size="sm"
+            onClick={() => setIsQuickLogOpen(true)}
+          >
+            ✍️ + Quick Log
+          </Button>
         </div>
 
         {todayMeals.length > 0 ? (
@@ -147,21 +155,29 @@ export default function DashboardPage() {
           <div
             style={{
               textAlign: 'center',
-              padding: '40px 16px',
+              padding: '32px 16px',
               backgroundColor: 'var(--md-sys-color-surface-container)',
               borderRadius: 'var(--md-sys-shape-corner-medium)',
             }}
           >
-            <div className="animate-float" style={{ fontSize: '48px', marginBottom: '12px' }}>📸</div>
+            <div className="animate-float" style={{ fontSize: '44px', marginBottom: '8px' }}>🥗</div>
             <p className="body-large" style={{ color: 'var(--md-sys-color-on-surface)', marginBottom: '4px' }}>
-              No meals logged yet
+              No meals logged yet today
             </p>
-            <p className="body-medium" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
-              Tap the camera button to snap your first meal!
+            <p className="body-medium" style={{ color: 'var(--md-sys-color-on-surface-variant)', marginBottom: '16px' }}>
+              Log with AI chat, photo camera, or manual entry
             </p>
+            <div style={{ display: 'inline-flex', gap: '8px' }}>
+              <Button variant="filled" size="sm" onClick={() => setIsQuickLogOpen(true)}>
+                ✍️ Quick Manual Log
+              </Button>
+            </div>
           </div>
         )}
       </motion.div>
+
+      {/* Quick Log Modal */}
+      <QuickLogModal isOpen={isQuickLogOpen} onClose={() => setIsQuickLogOpen(false)} />
     </div>
   );
 }

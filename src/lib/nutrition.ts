@@ -323,6 +323,11 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  actionInfo?: {
+    type: string;
+    title: string;
+    detail: string;
+  };
 }
 
 export interface DayTrendData {

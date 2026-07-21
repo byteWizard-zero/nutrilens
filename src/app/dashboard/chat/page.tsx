@@ -120,6 +120,7 @@ export default function ChatPage() {
         {isTyping && currentStreamedText && (
           <ChatBubble
             message={{
+              id: 'streaming',
               role: 'assistant',
               content: currentStreamedText,
               timestamp: new Date().toISOString(),

@@ -6,12 +6,15 @@ import { useRouter } from 'next/navigation';
 import { usePhotoStore } from '@/store/photoStore';
 import Button from '@/components/ui/Button';
 
+import QuickLogModal from '@/components/QuickLogModal';
+
 export default function CameraPage() {
   const router = useRouter();
   const setPhotoStore = usePhotoStore((s) => s.setPhoto);
   const [photo, setPhoto] = useState<string | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState(false);
+  const [isQuickLogOpen, setIsQuickLogOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -117,17 +120,17 @@ export default function CameraPage() {
                 style={{
                   backgroundColor: 'var(--md-sys-color-surface-container)',
                   borderRadius: 'var(--md-sys-shape-corner-large)',
-                  padding: '60px 24px',
+                  padding: '48px 24px',
                   textAlign: 'center',
                   marginBottom: '16px',
                 }}
               >
                 <div className="animate-float" style={{ fontSize: '64px', marginBottom: '20px' }}>📷</div>
                 <p className="body-large" style={{ color: 'var(--md-sys-color-on-surface)', marginBottom: '8px' }}>
-                  Take a photo of your meal
+                  Take a photo or log manually
                 </p>
                 <p className="body-medium" style={{ color: 'var(--md-sys-color-on-surface-variant)', marginBottom: '24px' }}>
-                  Our AI will identify food items and calculate nutrition
+                  Snap a picture, upload an image, or type food details manually
                 </p>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '300px', margin: '0 auto' }}>
@@ -140,6 +143,13 @@ export default function CameraPage() {
                     fullWidth
                   >
                     🖼️ Upload from Gallery
+                  </Button>
+                  <Button
+                    variant="tonal"
+                    onClick={() => setIsQuickLogOpen(true)}
+                    fullWidth
+                  >
+                    ✍️ Manual Quick Log
                   </Button>
                 </div>
 
@@ -181,6 +191,8 @@ export default function CameraPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <QuickLogModal isOpen={isQuickLogOpen} onClose={() => setIsQuickLogOpen(false)} />
     </div>
   );
 }
