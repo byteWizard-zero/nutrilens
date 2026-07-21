@@ -5,7 +5,7 @@ import { motion } from 'motion/react';
 import ChatBubble from '@/components/ChatBubble';
 import TypingIndicator from '@/components/TypingIndicator';
 import Chip from '@/components/ui/Chip';
-import { useChatStore } from '@/store/chatStore';
+import { useChatStore, stripActionBlocks } from '@/store/chatStore';
 import { useUserStore } from '@/store/userStore';
 import { useMealStore } from '@/store/mealStore';
 import { getLocalDateString } from '@/lib/dateUtils';
@@ -122,7 +122,7 @@ export default function ChatPage() {
             message={{
               id: 'streaming',
               role: 'assistant',
-              content: currentStreamedText,
+              content: stripActionBlocks(currentStreamedText),
               timestamp: new Date().toISOString(),
             }}
             isStreaming

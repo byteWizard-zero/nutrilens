@@ -38,8 +38,18 @@ interface ActionItem {
   };
 }
 
+export function stripActionBlocks(text: string): string {
+  return text
+    .replace(/```(?:json:action|json|action)?\s*[\s\S]*?"action"\s*:[\s\S]*?```/gi, '')
+    .replace(/\{[\s\S]*?"action"\s*:\s*"(?:log_meal|update_profile|update_theme|delete_meal|clear_history)"[\s\S]*?\}/gi, '')
+    .trim();
+}
+
 function parseAndExecuteAction(responseContent: string) {
-  const match = responseContent.match(/```json:action\s*([\s\S]*?)\s*```/);
+  // Flexible regex to match ```json:action, ```json, ```action, or raw action JSON
+  const match = responseContent.match(/```(?:json:action|json|action)?\s*([\s\S]*?"action"\s*:[\s\S]*?)\s*```/i)
+    || responseContent.match(/(\{[\s\S]*?"action"\s*:\s*"(?:log_meal|update_profile|update_theme|delete_meal|clear_history)"[\s\S]*?\})/i);
+
   if (!match) return null;
 
   try {
@@ -185,8 +195,8 @@ export const useChatStore = create<ChatState>((set) => ({
       // Execute any embedded Jarvis action
       const actionInfo = parseAndExecuteAction(fullResponse);
 
-      // Remove the raw json:action block from the displayed assistant message
-      const cleanResponse = fullResponse.replace(/```json:action\s*[\s\S]*?\s*```/g, '').trim();
+      // Remove any raw action JSON blocks from the displayed assistant message
+      const cleanResponse = stripActionBlocks(fullResponse);
 
       // Add complete assistant message
       const assistantMessage: ChatMessage = {
