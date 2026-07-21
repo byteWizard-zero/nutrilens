@@ -384,6 +384,9 @@ const CHAT_RESPONSES: Record<string, string[]> = {
   greeting: [
     "Hello! 👋 I'm your AI nutritionist. I can see you've logged {mealCount} meals today totaling {calories} kcal. You have {remaining} kcal remaining for your daily goal.\n\nFeel free to ask me anything about your nutrition! I can:\n• Analyze if your meals are balanced\n• Suggest snacks based on your macro gaps\n• Give tips for meeting your {goal} goal\n\nWhat would you like to know?",
   ],
+  offtopic: [
+    "I am NutriLens AI, specialized exclusively in nutrition, food, diet tracking, and health goals! 🥗 I can't help with coding, math, or non-nutrition topics. Feel free to ask me about your meals, macros, or calorie goals instead!",
+  ],
 };
 
 /**
@@ -408,7 +411,12 @@ export function getMockChatResponse(
 
   let responses: string[];
 
-  if (msg.includes('protein')) {
+  const offTopicKeywords = ['python', 'code', 'coding', 'javascript', 'html', 'css', 'script', 'program', 'function', 'class ', 'def ', 'import ', 'essay', 'math', 'calculator', 'history', 'geography', 'physics', 'chemistry', 'game'];
+  const isOffTopic = offTopicKeywords.some(kw => msg.includes(kw));
+
+  if (isOffTopic) {
+    responses = CHAT_RESPONSES.offtopic;
+  } else if (msg.includes('protein')) {
     responses = CHAT_RESPONSES.protein;
   } else if (msg.includes('healthy') || msg.includes('lunch') || msg.includes('dinner') || msg.includes('breakfast')) {
     responses = CHAT_RESPONSES.healthy;

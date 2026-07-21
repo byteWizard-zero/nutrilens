@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nutrilens-cache-v1';
+const CACHE_NAME = 'nutrilens-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/onboarding',
@@ -37,8 +37,35 @@ self.addEventListener('fetch', (event) => {
   // Only intercept GET requests
   if (event.request.method !== 'GET') return;
 
+  // Never intercept API routes
+  if (event.request.url.includes('/api/')) return;
+
   // Only intercept requests for the same origin
   if (event.request.url.startsWith(self.location.origin)) {
+    // Network-First strategy for page navigations to prevent cache lock
+    if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {
+      event.respondWith(
+        fetch(event.request)
+          .then((response) => {
+            if (response && response.status === 200) {
+              const responseToCache = response.clone();
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(event.request, responseToCache);
+              });
+            }
+            return response;
+          })
+          .catch(() => {
+            return caches.match(event.request).then((cachedResponse) => {
+              if (cachedResponse) return cachedResponse;
+              return caches.match('/'); // Fallback to root index
+            });
+          })
+      );
+      return;
+    }
+
+    // Cache-First strategy for static assets (JS, CSS, images)
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
         if (cachedResponse) {
@@ -53,11 +80,6 @@ self.addEventListener('fetch', (event) => {
             });
           }
           return response;
-        }).catch(() => {
-          // Offline fallback for page navigation
-          if (event.request.mode === 'navigate') {
-            return caches.match('/');
-          }
         });
       })
     );
