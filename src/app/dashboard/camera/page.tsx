@@ -22,17 +22,39 @@ export default function CameraPage() {
 
   const startCamera = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        streamRef.current = stream;
-        setCameraActive(true);
+      setCameraError(false);
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        });
+      } catch {
+        // Fallback for devices/laptops without rear camera
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
       }
-    } catch {
+      streamRef.current = stream;
+      setCameraActive(true);
+    } catch (err) {
+      console.error('Camera error:', err);
       setCameraError(true);
     }
+  }, []);
+
+  // Attach stream once video element mounts in DOM
+  React.useEffect(() => {
+    if (cameraActive && streamRef.current && videoRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play().catch((e) => console.warn('Video play failed:', e));
+    }
+  }, [cameraActive]);
+
+  // Clean up camera stream on unmount
+  React.useEffect(() => {
+    return () => {
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+    };
   }, []);
 
   const stopCamera = () => {
@@ -91,7 +113,8 @@ export default function CameraPage() {
                   ref={videoRef}
                   autoPlay
                   playsInline
-                  style={{ width: '100%', display: 'block', borderRadius: 'var(--md-sys-shape-corner-large)' }}
+                  muted
+                  style={{ width: '100%', display: 'block', borderRadius: 'var(--md-sys-shape-corner-large)', backgroundColor: '#000' }}
                 />
                 <canvas ref={canvasRef} style={{ display: 'none' }} />
 
